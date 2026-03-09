@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="mb-6 flex items-center">
+        <a href="{% url 'company_detail' bike.company.id %}" class="text-brand-600 hover:text-brand-800 text-sm font-medium flex items-center">
+            <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to {{ bike.company.name }}
+        </a>
+    </div>
+
+    <div class="bg-white shadow rounded-lg border border-gray-100 overflow-hidden">
+        <div class="px-4 py-5 sm:p-6 bg-brand-50 border-b border-brand-100 flex items-center justify-between">
+            <div>
+                <h3 class="text-xl leading-6 font-bold text-gray-900">Book {{ bike.bike_name }}</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">{{ bike.bike_type }}</p>
+            </div>
+            <div class="text-right">
+                <div class="text-sm text-gray-500">Pricing</div>
+                <div class="text-brand-700 font-semibold" id="displayed-rates">
+                    ₹{{ bike.price_per_hour }}/hr | ₹{{ bike.price_per_day }}/day
+                </div>
+            </div>
+        </div>
+        
+        <form action="" method="POST" class="px-4 py-5 sm:p-6" id="booking-form">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                    <label for="user_name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                    <div class="mt-1">
+                        <input type="text" name="user_name" id="user_name" required class="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label for="user_contact" class="block text-sm font-medium text-gray-700">Contact Number</label>
+                    <div class="mt-1">
+                        <input type="text" name="user_contact" id="user_contact" required class="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="booking_date" class="block text-sm font-medium text-gray-700">Booking Date</label>
+                    <div class="mt-1">
+                        <input type="date" name="booking_date" id="booking_date" required class="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="start_time" class="block text-sm font-medium text-gray-700">Start Time</label>
+                    <div class="mt-1">
+                        <input type="time" name="start_time" id="start_time" required class="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="duration_type" class="block text-sm font-medium text-gray-700">Duration Type</label>
+                    <div class="mt-1">
+                        <select name="duration_type" id="duration_type" class="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border bg-white">
+                            <option value="Hours">Hours</option>
+                            <option value="Days">Days</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="duration_value" class="block text-sm font-medium text-gray-700">Duration (<span id="duration-label">Hours</span>)</label>
+                    <div class="mt-1">
+                        <input type="number" name="duration_value" id="duration_value" min="1" value="1" required class="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Pricing Display -->
+            <div class="mt-8 bg-gray-50 rounded-lg p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-base font-medium text-gray-900">Total Price</h4>
+                        <p class="text-sm text-gray-500">Calculated automatically</p>
+                    </div>
+                    <div>
+                        <span class="text-3xl font-extrabold text-brand-600" id="total_price_display">₹0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors">
+                    Confirm Booking
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pricePerHour = {{ bike.price_per_hour|safe }};
+        const pricePerDay = {{ bike.price_per_day|safe }};
+        
+        const durationTypeSelect = document.getElementById('duration_type');
+        const durationValueInput = document.getElementById('duration_value');
+        const durationLabel = document.getElementById('duration-label');
+        const totalPriceDisplay = document.getElementById('total_price_display');
+        
+        function calculateTotal() {
+            const type = durationTypeSelect.value;
+            const value = parseInt(durationValueInput.value) || 0;
+            let total = 0;
+            
+            if (type === 'Hours') {
+                total = value * pricePerHour;
+                durationLabel.textContent = 'Hours';
+            } else {
+                total = value * pricePerDay;
+                durationLabel.textContent = 'Days';
+            }
+            
+            totalPriceDisplay.textContent = '₹' + total.toFixed(2);
+        }
+
+        // Set min date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('booking_date').setAttribute('min', today);
+
+        // Event listeners
+        durationTypeSelect.addEventListener('change', calculateTotal);
+        durationValueInput.addEventListener('input', calculateTotal);
+        
+        // Initial calc
+        calculateTotal();
+    });
+</script>
+{% endblock %}

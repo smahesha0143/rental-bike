@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="mb-6 flex items-center justify-between">
+        <div class="flex items-center">
+            <a href="{% url 'admin_dashboard' %}" class="text-brand-600 hover:text-brand-800 text-sm font-medium flex items-center">
+                <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Add Bike Form -->
+        <div class="lg:col-span-1">
+            <div class="bg-white shadow sm:rounded-lg border border-gray-100">
+                <div class="px-4 py-5 sm:p-6 bg-brand-50 border-b border-brand-100">
+                    <h3 class="text-lg leading-6 font-medium text-brand-900">Add New Bike</h3>
+                </div>
+                <div class="px-4 py-5 sm:p-6">
+                    <form action="" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="space-y-4">
+                            {% for field in form %}
+                            <div>
+                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                    {{ field.label }}
+                                </label>
+                                <div class="mt-1 flex items-center">
+                                    {{ field }}
+                                </div>
+                                {% if field.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ field.errors.as_text }}</p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700">
+                                Add Bike
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bikes List -->
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow sm:rounded-lg border border-gray-100 overflow-hidden">
+                <div class="px-4 py-5 sm:p-6 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">All Bikes</h3>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {{ bikes|length }} total
+                    </span>
+                </div>
+                
+                <ul role="list" class="divide-y divide-gray-200">
+                    {% for bike in bikes %}
+                    <li>
+                        <div class="px-4 py-4 sm:px-6 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-12 w-12 bg-gray-100 rounded-md overflow-hidden">
+                                        {% if bike.image %}
+                                        <img class="h-12 w-12 object-cover" src="{{ bike.image.url }}" alt="">
+                                        {% else %}
+                                        <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                                        </svg>
+                                        {% endif %}
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-brand-600 truncate">
+                                            {{ bike.bike_name }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ bike.company.name }} &bull; {{ bike.bike_type }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end space-y-2">
+                                    <div class="flex items-center space-x-2">
+                                        {% if bike.is_available %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                          Available
+                                        </span>
+                                        {% else %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                          Booked
+                                        </span>
+                                        {% endif %}
+                                        <span class="text-sm text-gray-900 font-semibold">₹{{ bike.price_per_hour }}/hr</span>
+                                    </div>
+                                    <div class="flex space-x-2 text-sm">
+                                        <a href="{% url 'edit_bike' bike.id %}" class="text-brand-600 hover:text-brand-900 font-medium">Edit</a>
+                                        <span class="text-gray-300">|</span>
+                                        <a href="{% url 'delete_bike' bike.id %}" class="text-red-600 hover:text-red-900 font-medium">Delete</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="px-4 py-8 text-center text-sm text-gray-500">
+                        No bikes added yet. Use the form to add a bike.
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
