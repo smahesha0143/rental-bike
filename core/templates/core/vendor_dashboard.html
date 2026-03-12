@@ -1,5 +1,13 @@
 {% extends 'base.html' %}
 
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+    #bikes-map { height: 400px; width: 100%; z-index: 10; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
     <div class="mb-8 flex justify-between items-center">
@@ -109,5 +117,65 @@
             </a>
         </div>
     </div>
+
+    <!-- Map Tracking -->
+    <div class="bg-white shadow rounded-lg border border-gray-100 p-6 mt-8">
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
+            <svg class="h-5 w-5 mr-2 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Live Bike Locations
+        </h3>
+        <div id="bikes-map" class="rounded-lg border border-gray-300"></div>
+    </div>
+
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var map = L.map('bikes-map').setView([20.5937, 78.9629], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        var bounds = [];
+
+        {% for bike in bikes %}
+            {% if bike.latitude and bike.longitude %}
+                var lat = parseFloat("{{ bike.latitude }}");
+                var lng = parseFloat("{{ bike.longitude }}");
+                var is_available = "{{ bike.is_available|yesno:'true,false' }}" === "true";
+                var statusStr = is_available ? "Available" : "Booked";
+                var color = is_available ? "#10B981" : "#EF4444"; // Tailwind green-500 : red-500
+                
+                var markerContent = '<div style="background-color: ' + color + '; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.4);"></div>';
+                
+                var customIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: markerContent,
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8],
+                    popupAnchor: [0, -8]
+                });
+
+                var marker = L.marker([lat, lng], {icon: customIcon}).addTo(map);
+                var popupHtml = '<div class="p-1">' +
+                        '<strong>{{ bike.bike_name|escapejs }}</strong><br>' +
+                        '<span class="text-xs text-gray-500">{{ bike.bike_type|escapejs }}</span><br>' +
+                        '<span class="font-medium inline-flex items-center px-2 py-0.5 rounded text-xs mt-1" style="background-color: ' + (is_available ? '#D1FAE5' : '#FEE2E2') + '; color: ' + (is_available ? '#065F46' : '#991B1B') + '">' +
+                            statusStr +
+                        '</span>' +
+                    '</div>';
+                marker.bindPopup(popupHtml);
+                bounds.push([lat, lng]);
+            {% endif %}
+        {% endfor %}
+
+        if (bounds.length > 0) {
+            map.fitBounds(bounds, {padding: [50, 50]});
+        }
+    });
+</script>
 {% endblock %}

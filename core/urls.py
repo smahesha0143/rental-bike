@@ -16,6 +16,8 @@ urlpatterns = [
     path('payment/<int:booking_id>/', views.payment_checkout, name='payment_checkout'),
     path('payment-success/', views.payment_success, name='payment_success'),
     path('my-bookings/', views.user_bookings, name='user_dashboard'),
+    path('cancel-booking/<int:booking_id>/', views.cancel_booking, name='cancel_booking'),
+    path('refund-success/<int:booking_id>/', views.refund_success, name='refund_success'),
     # Vendor Dashboard
     path('vendor-dashboard/', views.vendor_dashboard, name='vendor_dashboard'),
     path('vendor-dashboard/add-bike/', views.vendor_add_bike, name='vendor_add_bike'),
@@ -38,4 +40,6 @@ urlpatterns = [
     path('admin-dashboard/manage-bikes/delete/<int:bike_id>/', views.delete_bike, name='delete_bike'),
     path('admin-dashboard/bookings/', views.admin_bookings, name='admin_bookings'),
     path('admin-dashboard/bookings/edit/<int:booking_id>/', views.admin_edit_booking, name='admin_edit_booking'),
+    path('admin-dashboard/users/toggle/<int:user_id>/', views.toggle_user_status, name='toggle_user_status'),
+    path('admin-dashboard/users/delete/<int:user_id>/', views.delete_user_admin, name='delete_user_admin'),
 ]

@@ -87,7 +87,7 @@
     <!-- Quick Actions -->
     <div class="bg-white shadow rounded-lg border border-gray-100 p-6">
         <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <a href="{% url 'add_vendor' %}" class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex flex-col items-center text-center hover:border-brand-400 hover:ring-1 hover:ring-brand-400 transition-colors">
                 <span class="inline-flex items-center justify-center h-10 w-10 rounded-md bg-brand-500 text-white mb-3">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,6 +126,16 @@
                 </span>
                 <p class="text-sm font-medium text-gray-900">Manage Bikes</p>
                 <p class="text-xs text-gray-500 mt-1">Administer vehicles</p>
+            </a>
+
+            <a href="{% url 'vendor_verifications_list' %}" class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex flex-col items-center text-center hover:border-brand-400 hover:ring-1 hover:ring-brand-400 transition-colors">
+                <span class="inline-flex items-center justify-center h-10 w-10 rounded-md bg-purple-500 text-white mb-3">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-6.618 1.04c-.161.428-.277.874-.343 1.334a11.955 11.955 0 01-1.04 6.618a11.955 11.955 0 011.04 6.618a11.955 11.955 0 016.618 1.04a11.955 11.955 0 016.618-1.04a11.955 11.955 0 011.04-6.618a11.955 11.955 0 01-1.04-6.618z" />
+                    </svg>
+                </span>
+                <p class="text-sm font-medium text-gray-900">User Verifications</p>
+                <p class="text-xs text-gray-500 mt-1">Review identity docs</p>
             </a>
         </div>
     </div>

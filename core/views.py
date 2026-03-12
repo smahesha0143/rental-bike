@@ -30,10 +30,11 @@ def company_detail(request, company_id):
 def book_bike(request, bike_id):
     bike = get_object_or_404(Bike, id=bike_id)
     
-    # Enforce Identity Verification
-    if not hasattr(request.user, 'userprofile') or not request.user.userprofile.identity_verified:
-        messages.warning(request, "You must complete your identity verification before you can book a bike.")
-        return redirect('verify_identity')
+    # Enforce Identity Verification (Bypass for staff/superusers)
+    if not (request.user.is_staff or request.user.is_superuser):
+        if not hasattr(request.user, 'profile') or not request.user.profile.identity_verified:
+            messages.warning(request, "You must complete your identity verification before you can book a bike.")
+            return redirect('verify_identity')
         
     if not bike.is_available:
         messages.error(request, "This bike is currently not available.")
@@ -101,6 +102,9 @@ def user_login(request):
         if user is not None:
             # For superuser/admin overriding
             if login_as == 'ADMIN' and (user.is_superuser or user.is_staff):
+                # Ensure they have a profile, just in case
+                profile, created = UserProfile.objects.get_or_create(user=user, defaults={'role': UserProfile.RoleChoices.ADMIN})
+                # If they were an old superuser without ADMIN role, we can just optionally update or let them pass
                 login(request, user)
                 messages.success(request, f'Welcome back, Admin {username}!')
                 return redirect('admin_dashboard')
@@ -177,17 +181,24 @@ def user_bookings(request):
         verification = request.user.identity_verification
     except:
         verification = None
+    
+    # Fetch all available bikes for the "Find Nearby" map
+    available_bikes = Bike.objects.filter(is_available=True)
         
-    return render(request, 'core/user_dashboard.html', {'bookings': bookings, 'verification': verification})
+    return render(request, 'core/user_dashboard.html', {
+        'bookings': bookings, 
+        'verification': verification,
+        'available_bikes': available_bikes
+    })
 
 @login_required(login_url='login')
 def verify_identity(request):
     try:
         verification = request.user.identity_verification
-        # If already approved or pending, don't allow re-submission unless rejected
-        if verification.status in [IdentityVerification.VerificationStatus.APPROVED, IdentityVerification.VerificationStatus.PENDING]:
-            messages.info(request, f"Your identity verification is currently {verification.status}.")
-            return redirect('user_dashboard')
+        if not (request.user.is_staff or request.user.is_superuser):
+            if verification.status in [IdentityVerification.VerificationStatus.APPROVED, IdentityVerification.VerificationStatus.PENDING]:
+                messages.info(request, f"Your identity verification is currently {verification.status}.")
+                return redirect('user_dashboard')
     except:
         verification = None
 
@@ -260,36 +271,53 @@ from .forms import VendorRegistrationForm, BikeForm, VendorBikeForm, UpiUpdateFo
 
 @login_required(login_url='login')
 def vendor_dashboard(request):
-    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
-        return redirect('home')
+    if not (request.user.is_staff or request.user.is_superuser):
+        if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+            return redirect('home')
         
-    company = request.user.vendor_company
+    try:
+        company = request.user.vendor_company
+    except Company.DoesNotExist:
+        if request.user.is_staff or request.user.is_superuser:
+            messages.error(request, "Admins must be linked to a Company to view this dashboard.")
+            return redirect('admin_dashboard')
+        return redirect('home')
     total_bikes = company.bikes.count()
     total_bookings = company.bookings.count()
     total_revenue = company.bookings.filter(status__in=[Booking.BookingStatus.CONFIRMED, Booking.BookingStatus.COMPLETED]).aggregate(Sum('total_price'))['total_price__sum'] or 0
+    bikes = company.bikes.all()
     
     return render(request, 'core/vendor_dashboard.html', {
         'company': company,
         'total_bikes': total_bikes,
         'total_bookings': total_bookings,
-        'total_revenue': total_revenue
+        'total_revenue': total_revenue,
+        'bikes': bikes
     })
 
 @login_required(login_url='login')
 def vendor_manage_bikes(request):
-    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
-        return redirect('home')
+    if not (request.user.is_staff or request.user.is_superuser):
+        if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+            return redirect('home')
     
-    company = request.user.vendor_company    
+    try:
+        company = request.user.vendor_company    
+    except:
+        return redirect('home')
     bikes = company.bikes.all().order_by('-created_at')
     return render(request, 'core/vendor_manage_bikes.html', {'bikes': bikes, 'company': company})
 
 @login_required(login_url='login')
 def vendor_add_bike(request):
-    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
-        return redirect('home')
+    if not (request.user.is_staff or request.user.is_superuser):
+        if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+            return redirect('home')
         
-    company = request.user.vendor_company
+    try:
+        company = request.user.vendor_company
+    except:
+        return redirect('home')
     if request.method == 'POST':
         form = VendorBikeForm(request.POST, request.FILES)
         if form.is_valid():
@@ -304,11 +332,16 @@ def vendor_add_bike(request):
 
 @login_required(login_url='login')
 def vendor_edit_bike(request, bike_id):
-    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
-        return redirect('home')
+    if not (request.user.is_staff or request.user.is_superuser):
+        if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+            return redirect('home')
         
-    company = request.user.vendor_company
-    bike = get_object_or_404(Bike, id=bike_id, company=company)
+    try:
+        company = request.user.vendor_company
+        bike = get_object_or_404(Bike, id=bike_id, company=company)
+    except:
+        bike = get_object_or_404(Bike, id=bike_id) # Admin can edit any bike
+        company = bike.company
     if request.method == 'POST':
         form = VendorBikeForm(request.POST, request.FILES, instance=bike)
         if form.is_valid():
@@ -321,10 +354,14 @@ def vendor_edit_bike(request, bike_id):
 
 @login_required(login_url='login')
 def vendor_update_upi(request):
-    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
-        return redirect('home')
+    if not (request.user.is_staff or request.user.is_superuser):
+        if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+            return redirect('home')
         
-    company = request.user.vendor_company
+    try:
+        company = request.user.vendor_company
+    except:
+        return redirect('home')
     if request.method == 'POST':
         form = UpiUpdateForm(request.POST, request.FILES, instance=company)
         if form.is_valid():
@@ -337,8 +374,9 @@ def vendor_update_upi(request):
 
 @login_required(login_url='login')
 def vendor_verifications_list(request):
-    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
-        return redirect('home')
+    if not (request.user.is_staff or request.user.is_superuser):
+        if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+            return redirect('home')
         
     pending_verifications = IdentityVerification.objects.filter(status=IdentityVerification.VerificationStatus.PENDING).order_by('created_at')
     reviewed_verifications = IdentityVerification.objects.filter(verified_by=request.user).order_by('-updated_at')
@@ -350,8 +388,9 @@ def vendor_verifications_list(request):
 
 @login_required(login_url='login')
 def vendor_approve_verification(request, verification_id, action):
-    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
-        return redirect('home')
+    if not (request.user.is_staff or request.user.is_superuser):
+        if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+            return redirect('home')
         
     verification = get_object_or_404(IdentityVerification, id=verification_id)
     
@@ -479,3 +518,29 @@ def admin_edit_booking(request, booking_id):
         else:
             messages.error(request, 'Invalid status.')
     return redirect('admin_bookings')
+
+@user_passes_test(lambda u: u.is_staff)
+def toggle_user_status(request, user_id):
+    target_user = get_object_or_404(User, id=user_id)
+    if target_user.is_superuser:
+        messages.error(request, "Cannot block a superuser.")
+    else:
+        target_user.is_active = not target_user.is_active
+        target_user.save()
+        status = "unblocked" if target_user.is_active else "blocked"
+        messages.success(request, f"User {target_user.username} has been {status}.")
+    
+    # Redirect back to whoever called (users or vendors list)
+    return redirect(request.META.get('HTTP_REFERER', 'admin_dashboard'))
+
+@user_passes_test(lambda u: u.is_staff)
+def delete_user_admin(request, user_id):
+    target_user = get_object_or_404(User, id=user_id)
+    if target_user.is_superuser:
+        messages.error(request, "Cannot delete a superuser.")
+    else:
+        username = target_user.username
+        target_user.delete()
+        messages.success(request, f"User {username} has been deleted.")
+    
+    return redirect(request.META.get('HTTP_REFERER', 'admin_dashboard'))
