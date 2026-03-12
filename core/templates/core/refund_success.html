@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Refund Processed - Digital Rental Bikes{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto mt-16 mb-16 px-4 sm:px-6">
+    <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 text-center">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-10">
+            <div class="w-20 h-20 mx-auto bg-white/20 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-white">Booking Cancelled</h2>
+            <p class="text-white/80 mt-2">Your booking has been successfully cancelled</p>
+        </div>
+
+        <!-- Refund Details -->
+        <div class="p-8">
+            {% if booking.refund_amount > 0 %}
+            <div class="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
+                <p class="text-green-600 font-medium mb-1">Refund Amount</p>
+                <p class="text-4xl font-bold text-green-700">₹{{ booking.refund_amount }}</p>
+                <p class="text-green-600 text-sm mt-2">The refund will be credited to your original payment method within 5-7 business days.</p>
+            </div>
+            {% else %}
+            <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-6">
+                <p class="text-gray-600 font-medium mb-1">No Refund Required</p>
+                <p class="text-gray-500 text-sm mt-2">This booking was cancelled before payment was completed.</p>
+            </div>
+            {% endif %}
+
+            <!-- Booking Summary -->
+            <div class="text-left bg-gray-50 rounded-xl p-5 mb-6 border border-gray-200">
+                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Cancelled Booking</h4>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Bike:</span>
+                        <span class="font-medium text-gray-900">{{ booking.bike.bike_name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Company:</span>
+                        <span class="font-medium text-gray-900">{{ booking.company.name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Date:</span>
+                        <span class="font-medium text-gray-900">{{ booking.booking_date }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <a href="{% url 'user_dashboard' %}" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                &larr; Back to My Bookings
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

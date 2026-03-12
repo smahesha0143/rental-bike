@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 class Company(models.Model):
     name = models.CharField(max_length=255)
@@ -38,12 +39,14 @@ class Booking(models.Model):
         DAYS = 'Days', 'Days'
         
     class BookingStatus(models.TextChoices):
+        PAYMENT_PENDING = 'Payment Pending', 'Payment Pending'
         CONFIRMED = 'Confirmed', 'Confirmed'
         COMPLETED = 'Completed', 'Completed'
         CANCELLED = 'Cancelled', 'Cancelled'
 
     bike = models.ForeignKey(Bike, on_delete=models.CASCADE, related_name='bookings')
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='bookings')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings', null=True, blank=True)
     user_name = models.CharField(max_length=255)
     user_contact = models.CharField(max_length=50)
     booking_date = models.DateField()
@@ -51,7 +54,8 @@ class Booking(models.Model):
     duration_type = models.CharField(max_length=10, choices=DurationType.choices)
     duration_value = models.PositiveIntegerField()
     total_price = models.DecimalField(max_digits=12, decimal_places=2)
-    status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.CONFIRMED)
+    status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.PAYMENT_PENDING)
+    refund_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

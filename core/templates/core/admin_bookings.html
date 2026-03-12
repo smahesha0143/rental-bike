@@ -16,7 +16,7 @@
     <div class="bg-white shadow sm:rounded-lg border border-gray-100 overflow-hidden">
         <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
             <h3 class="text-lg leading-6 font-medium text-gray-900">All Bookings</h3>
-            <p class="mt-1 max-w-2xl text-sm text-gray-500">A comprehensive list of all customer bookings.</p>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Sorted by booking date. Use the actions column to update booking status.</p>
         </div>
         
         <div class="overflow-x-auto">
@@ -28,6 +28,8 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">When</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Refund</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -47,26 +49,45 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if booking.status == 'Confirmed' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                Confirmed
-                            </span>
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Confirmed</span>
                             {% elif booking.status == 'Completed' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                Completed
-                            </span>
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
+                            {% elif booking.status == 'Cancelled' %}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Cancelled</span>
+                            {% elif booking.status == 'Payment Pending' %}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Payment Pending</span>
                             {% else %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                {{ booking.status }}
-                            </span>
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{{ booking.status }}</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <span class="text-gray-900 font-bold">₹{{ booking.total_price }}</span>
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            {% if booking.refund_amount > 0 %}
+                            <span class="text-green-700 font-bold">₹{{ booking.refund_amount }}</span>
+                            {% else %}
+                            <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <form method="post" action="{% url 'admin_edit_booking' booking.id %}" class="flex items-center justify-center space-x-2">
+                                {% csrf_token %}
+                                <select name="status" class="text-xs rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1.5 px-2 border bg-white">
+                                    <option value="Payment Pending" {% if booking.status == 'Payment Pending' %}selected{% endif %}>Payment Pending</option>
+                                    <option value="Confirmed" {% if booking.status == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+                                    <option value="Completed" {% if booking.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                    <option value="Cancelled" {% if booking.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                </select>
+                                <button type="submit" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-semibold rounded-lg text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-500 transition-colors shadow-sm">
+                                    Update
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">
+                        <td colspan="7" class="px-6 py-8 text-center text-sm text-gray-500">
                             No bookings found in the system yet.
                         </td>
                     </tr>
