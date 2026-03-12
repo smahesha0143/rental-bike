@@ -87,35 +87,45 @@
     <!-- Quick Actions -->
     <div class="bg-white shadow rounded-lg border border-gray-100 p-6">
         <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <a href="{% url 'add_company' %}" class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-brand-400 hover:ring-1 hover:ring-brand-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">
-                <div class="flex-shrink-0">
-                    <span class="inline-flex items-center justify-center h-10 w-10 rounded-md bg-brand-500 text-white">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                    </span>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <span class="absolute inset-0" aria-hidden="true"></span>
-                    <p class="text-sm font-medium text-gray-900">Add Rental Company</p>
-                    <p class="text-sm text-gray-500 truncate">Register a new partner</p>
-                </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <a href="{% url 'add_vendor' %}" class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex flex-col items-center text-center hover:border-brand-400 hover:ring-1 hover:ring-brand-400 transition-colors">
+                <span class="inline-flex items-center justify-center h-10 w-10 rounded-md bg-brand-500 text-white mb-3">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                </span>
+                <p class="text-sm font-medium text-gray-900">Add Vendor</p>
+                <p class="text-xs text-gray-500 mt-1">Register new vendor</p>
             </a>
 
-            <a href="{% url 'manage_bikes' %}" class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-brand-400 hover:ring-1 hover:ring-brand-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">
-                <div class="flex-shrink-0">
-                    <span class="inline-flex items-center justify-center h-10 w-10 rounded-md bg-green-500 text-white">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                    </span>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <span class="absolute inset-0" aria-hidden="true"></span>
-                    <p class="text-sm font-medium text-gray-900">Manage Bikes</p>
-                    <p class="text-sm text-gray-500 truncate">Add, edit, or remove bikes</p>
-                </div>
+            <a href="{% url 'manage_vendors' %}" class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex flex-col items-center text-center hover:border-brand-400 hover:ring-1 hover:ring-brand-400 transition-colors">
+                <span class="inline-flex items-center justify-center h-10 w-10 rounded-md bg-indigo-500 text-white mb-3">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                </span>
+                <p class="text-sm font-medium text-gray-900">Manage Vendors</p>
+                <p class="text-xs text-gray-500 mt-1">View vendor list</p>
+            </a>
+
+            <a href="{% url 'manage_users' %}" class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex flex-col items-center text-center hover:border-brand-400 hover:ring-1 hover:ring-brand-400 transition-colors">
+                <span class="inline-flex items-center justify-center h-10 w-10 rounded-md bg-blue-500 text-white mb-3">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </span>
+                <p class="text-sm font-medium text-gray-900">Manage Users</p>
+                <p class="text-xs text-gray-500 mt-1">View customers</p>
+            </a>
+
+            <a href="{% url 'manage_bikes' %}" class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex flex-col items-center text-center hover:border-brand-400 hover:ring-1 hover:ring-brand-400 transition-colors">
+                <span class="inline-flex items-center justify-center h-10 w-10 rounded-md bg-green-500 text-white mb-3">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                </span>
+                <p class="text-sm font-medium text-gray-900">Manage Bikes</p>
+                <p class="text-xs text-gray-500 mt-1">Administer vehicles</p>
             </a>
         </div>
     </div>

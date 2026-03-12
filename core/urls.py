@@ -16,12 +16,23 @@ urlpatterns = [
     path('payment/<int:booking_id>/', views.payment_checkout, name='payment_checkout'),
     path('payment-success/', views.payment_success, name='payment_success'),
     path('my-bookings/', views.user_bookings, name='user_dashboard'),
-    path('booking/<int:booking_id>/cancel/', views.cancel_booking, name='cancel_booking'),
-    path('refund-success/<int:booking_id>/', views.refund_success, name='refund_success'),
+    # Vendor Dashboard
+    path('vendor-dashboard/', views.vendor_dashboard, name='vendor_dashboard'),
+    path('vendor-dashboard/add-bike/', views.vendor_add_bike, name='vendor_add_bike'),
+    path('vendor-dashboard/manage-bikes/', views.vendor_manage_bikes, name='vendor_manage_bikes'),
+    path('vendor-dashboard/edit-bike/<int:bike_id>/', views.vendor_edit_bike, name='vendor_edit_bike'),
+    path('vendor-dashboard/update-upi/', views.vendor_update_upi, name='vendor_update_upi'),
+    path('vendor-dashboard/verifications/', views.vendor_verifications_list, name='vendor_verifications_list'),
+    path('vendor-dashboard/verifications/<int:verification_id>/<str:action>/', views.vendor_approve_verification, name='vendor_approve_verification'),
+    
+    # User Profile / Identity
+    path('verify-identity/', views.verify_identity, name='verify_identity'),
     
     # Admin
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
-    path('admin-dashboard/add-company/', views.add_company, name='add_company'),
+    path('admin-dashboard/add-vendor/', views.add_vendor, name='add_vendor'),
+    path('admin-dashboard/vendors/', views.manage_vendors, name='manage_vendors'),
+    path('admin-dashboard/users/', views.manage_users, name='manage_users'),
     path('admin-dashboard/manage-bikes/', views.manage_bikes, name='manage_bikes'),
     path('admin-dashboard/manage-bikes/edit/<int:bike_id>/', views.edit_bike, name='edit_bike'),
     path('admin-dashboard/manage-bikes/delete/<int:bike_id>/', views.delete_bike, name='delete_bike'),

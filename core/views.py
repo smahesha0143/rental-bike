@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.utils import timezone
-from .models import Company, Bike, Booking
+from .models import Company, Bike, Booking, UserProfile, IdentityVerification
 from django.urls import reverse
+from django.db import transaction
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -25,8 +26,15 @@ def company_detail(request, company_id):
     return render(request, 'core/company_detail.html', {'company': company, 'bikes': bikes})
 
 @login_required(login_url='login')
+@transaction.atomic
 def book_bike(request, bike_id):
     bike = get_object_or_404(Bike, id=bike_id)
+    
+    # Enforce Identity Verification
+    if not hasattr(request.user, 'userprofile') or not request.user.userprofile.identity_verified:
+        messages.warning(request, "You must complete your identity verification before you can book a bike.")
+        return redirect('verify_identity')
+        
     if not bike.is_available:
         messages.error(request, "This bike is currently not available.")
         return redirect('company_detail', company_id=bike.company.id)
@@ -67,6 +75,7 @@ def register_user(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            UserProfile.objects.create(user=user, role=UserProfile.RoleChoices.USER)
             login(request, user)
             messages.success(request, 'Registration successful. Welcome!')
             return redirect('home')
@@ -84,17 +93,36 @@ def register_user(request):
 
 def user_login(request):
     if request.method == 'POST':
+        login_as = request.POST.get('login_as', 'USER')
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(username=username, password=password)
+        
         if user is not None:
+            # For superuser/admin overriding
+            if login_as == 'ADMIN' and (user.is_superuser or user.is_staff):
+                login(request, user)
+                messages.success(request, f'Welcome back, Admin {username}!')
+                return redirect('admin_dashboard')
+            elif login_as == 'ADMIN':
+                messages.error(request, 'You do not have Administrator privileges.')
+                return redirect('login')
+
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            if profile.role != login_as:
+                messages.error(request, f'This account is not a {login_as.capitalize()} account.')
+                return redirect('login')
+
             login(request, user)
             messages.success(request, f'Welcome back, {username}!')
-            if user.is_staff:
-                return redirect('admin_dashboard')
-            return redirect('home')
+            
+            if profile.role == 'VENDOR':
+                return redirect('vendor_dashboard')
+            else:
+                return redirect('home')
         else:
             messages.error(request, 'Invalid username or password.')
+            
     form = AuthenticationForm()
     register_form = UserCreationForm()
     return render(request, 'core/login.html', {
@@ -128,10 +156,15 @@ def payment_checkout(request, booking_id):
         bike.is_available = False
         bike.save()
 
-        messages.success(request, f"Payment successful! You have booked {booking.bike.bike_name}.")
+        messages.success(request, 'Payment successful! Your bike is booked.')
         return redirect('payment_success')
 
-    return render(request, 'core/payment_checkout.html', {'booking': booking})
+    company = booking.company
+
+    return render(request, 'core/payment_checkout.html', {
+        'booking': booking,
+        'company': company
+    })
 
 @login_required(login_url='login')
 def payment_success(request):
@@ -140,7 +173,46 @@ def payment_success(request):
 @login_required(login_url='login')
 def user_bookings(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-booking_date', '-start_time')
-    return render(request, 'core/user_dashboard.html', {'bookings': bookings})
+    try:
+        verification = request.user.identity_verification
+    except:
+        verification = None
+        
+    return render(request, 'core/user_dashboard.html', {'bookings': bookings, 'verification': verification})
+
+@login_required(login_url='login')
+def verify_identity(request):
+    try:
+        verification = request.user.identity_verification
+        # If already approved or pending, don't allow re-submission unless rejected
+        if verification.status in [IdentityVerification.VerificationStatus.APPROVED, IdentityVerification.VerificationStatus.PENDING]:
+            messages.info(request, f"Your identity verification is currently {verification.status}.")
+            return redirect('user_dashboard')
+    except:
+        verification = None
+
+    if request.method == 'POST':
+        from .forms import IdentityVerificationForm
+        if verification:
+            form = IdentityVerificationForm(request.POST, request.FILES, instance=verification)
+        else:
+            form = IdentityVerificationForm(request.POST, request.FILES)
+            
+        if form.is_valid():
+            iv = form.save(commit=False)
+            iv.user = request.user
+            iv.status = IdentityVerification.VerificationStatus.PENDING
+            iv.save()
+            messages.success(request, 'Identity verification submitted successfully! Please wait for vendor approval.')
+            return redirect('user_dashboard')
+    else:
+        from .forms import IdentityVerificationForm
+        if verification:
+            form = IdentityVerificationForm(instance=verification)
+        else:
+            form = IdentityVerificationForm()
+            
+    return render(request, 'core/verify_identity.html', {'form': form, 'verification': verification})
 
 
 @login_required(login_url='login')
@@ -180,9 +252,126 @@ def refund_success(request, booking_id):
 
 
 
-# Admin Dashboard Views
+# Admin & Vendor Dashboard Views
 from django.db.models import Sum
-from .forms import CompanyForm, BikeForm
+from .forms import VendorRegistrationForm, BikeForm, VendorBikeForm, UpiUpdateForm
+
+# --- Vendor Views ---
+
+@login_required(login_url='login')
+def vendor_dashboard(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+        return redirect('home')
+        
+    company = request.user.vendor_company
+    total_bikes = company.bikes.count()
+    total_bookings = company.bookings.count()
+    total_revenue = company.bookings.filter(status__in=[Booking.BookingStatus.CONFIRMED, Booking.BookingStatus.COMPLETED]).aggregate(Sum('total_price'))['total_price__sum'] or 0
+    
+    return render(request, 'core/vendor_dashboard.html', {
+        'company': company,
+        'total_bikes': total_bikes,
+        'total_bookings': total_bookings,
+        'total_revenue': total_revenue
+    })
+
+@login_required(login_url='login')
+def vendor_manage_bikes(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+        return redirect('home')
+    
+    company = request.user.vendor_company    
+    bikes = company.bikes.all().order_by('-created_at')
+    return render(request, 'core/vendor_manage_bikes.html', {'bikes': bikes, 'company': company})
+
+@login_required(login_url='login')
+def vendor_add_bike(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+        return redirect('home')
+        
+    company = request.user.vendor_company
+    if request.method == 'POST':
+        form = VendorBikeForm(request.POST, request.FILES)
+        if form.is_valid():
+            bike = form.save(commit=False)
+            bike.company = company
+            bike.save()
+            messages.success(request, 'Bike added successfully!')
+            return redirect('vendor_manage_bikes')
+    else:
+        form = VendorBikeForm()
+    return render(request, 'core/vendor_edit_bike.html', {'form': form, 'title': 'Add Bike'})
+
+@login_required(login_url='login')
+def vendor_edit_bike(request, bike_id):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+        return redirect('home')
+        
+    company = request.user.vendor_company
+    bike = get_object_or_404(Bike, id=bike_id, company=company)
+    if request.method == 'POST':
+        form = VendorBikeForm(request.POST, request.FILES, instance=bike)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Bike updated successfully!')
+            return redirect('vendor_manage_bikes')
+    else:
+        form = VendorBikeForm(instance=bike)
+    return render(request, 'core/vendor_edit_bike.html', {'form': form, 'title': 'Edit Bike', 'bike': bike})
+
+@login_required(login_url='login')
+def vendor_update_upi(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+        return redirect('home')
+        
+    company = request.user.vendor_company
+    if request.method == 'POST':
+        form = UpiUpdateForm(request.POST, request.FILES, instance=company)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'UPI QR updated successfully!')
+            return redirect('vendor_dashboard')
+    else:
+        form = UpiUpdateForm(instance=company)
+    return render(request, 'core/vendor_update_upi.html', {'form': form, 'company': company})
+
+@login_required(login_url='login')
+def vendor_verifications_list(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+        return redirect('home')
+        
+    pending_verifications = IdentityVerification.objects.filter(status=IdentityVerification.VerificationStatus.PENDING).order_by('created_at')
+    reviewed_verifications = IdentityVerification.objects.filter(verified_by=request.user).order_by('-updated_at')
+    
+    return render(request, 'core/vendor_verifications.html', {
+        'pending': pending_verifications,
+        'reviewed': reviewed_verifications
+    })
+
+@login_required(login_url='login')
+def vendor_approve_verification(request, verification_id, action):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'VENDOR':
+        return redirect('home')
+        
+    verification = get_object_or_404(IdentityVerification, id=verification_id)
+    
+    if action == 'approve':
+        verification.status = IdentityVerification.VerificationStatus.APPROVED
+        verification.user.profile.identity_verified = True
+        verification.user.profile.save()
+        messages.success(request, f'Identity for {verification.user.username} approved.')
+    elif action == 'reject':
+        verification.status = IdentityVerification.VerificationStatus.REJECTED
+        verification.user.profile.identity_verified = False
+        verification.user.profile.save()
+        messages.warning(request, f'Identity for {verification.user.username} rejected.')
+        
+    verification.verified_by = request.user
+    verification.save()
+    
+    return redirect('vendor_verifications_list')
+
+# --- Admin Views ---
 
 @user_passes_test(lambda u: u.is_staff)
 def admin_dashboard(request):
@@ -196,16 +385,26 @@ def admin_dashboard(request):
     })
 
 @user_passes_test(lambda u: u.is_staff)
-def add_company(request):
+def add_vendor(request):
     if request.method == 'POST':
-        form = CompanyForm(request.POST)
+        form = VendorRegistrationForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Company added successfully!')
+            messages.success(request, 'Vendor added successfully!')
             return redirect('admin_dashboard')
     else:
-        form = CompanyForm()
-    return render(request, 'core/add_company.html', {'form': form})
+        form = VendorRegistrationForm()
+    return render(request, 'core/add_vendor.html', {'form': form})
+
+@user_passes_test(lambda u: u.is_staff)
+def manage_vendors(request):
+    vendors = UserProfile.objects.filter(role=UserProfile.RoleChoices.VENDOR)
+    return render(request, 'core/manage_vendors.html', {'vendors': vendors})
+
+@user_passes_test(lambda u: u.is_staff)
+def manage_users(request):
+    users_list = UserProfile.objects.filter(role=UserProfile.RoleChoices.USER)
+    return render(request, 'core/manage_users.html', {'users_list': users_list})
 
 @user_passes_test(lambda u: u.is_staff)
 def manage_bikes(request):

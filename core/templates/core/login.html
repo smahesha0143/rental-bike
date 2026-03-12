@@ -3,91 +3,6 @@
 {% block content %}
 <div class="max-w-4xl mx-auto mt-10 mb-12 px-4 sm:px-6">
 
-    <!-- Quick Login Cards -->
-    <div class="mb-8">
-        <h2 class="text-center text-2xl font-bold text-gray-800 mb-6">Quick Login</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <!-- Admin Card -->
-            <div class="relative bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl shadow-xl p-6 text-white overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-10 translate-x-10"></div>
-                <div class="relative z-10">
-                    <div class="flex items-center mb-4">
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mr-4">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold">Admin Login</h3>
-                            <p class="text-white/70 text-sm">Full dashboard access</p>
-                        </div>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4 space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-white/70 text-sm">Username:</span>
-                            <span class="font-mono font-bold text-lg">admin</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-white/70 text-sm">Password:</span>
-                            <span class="font-mono font-bold text-lg">admin123</span>
-                        </div>
-                    </div>
-                    <form method="post" action="{% url 'login' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="username" value="admin">
-                        <input type="hidden" name="password" value="admin123">
-                        <button type="submit" class="w-full py-3 bg-white text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                            Login as Admin &rarr;
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- User Card -->
-            <div class="relative bg-gradient-to-br from-brand-500 to-cyan-600 rounded-2xl shadow-xl p-6 text-white overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-10 translate-x-10"></div>
-                <div class="relative z-10">
-                    <div class="flex items-center mb-4">
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mr-4">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold">User Login</h3>
-                            <p class="text-white/70 text-sm">Browse & book bikes</p>
-                        </div>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4 space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-white/70 text-sm">Username:</span>
-                            <span class="font-mono font-bold text-lg">user</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-white/70 text-sm">Password:</span>
-                            <span class="font-mono font-bold text-lg">user123</span>
-                        </div>
-                    </div>
-                    <form method="post" action="{% url 'login' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="username" value="user">
-                        <input type="hidden" name="password" value="user123">
-                        <button type="submit" class="w-full py-3 bg-white text-brand-700 font-bold rounded-xl hover:bg-brand-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                            Login as User &rarr;
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Divider -->
-    <div class="flex items-center my-8">
-        <div class="flex-grow border-t border-gray-300"></div>
-        <span class="mx-4 text-gray-500 text-sm font-medium">OR USE YOUR OWN ACCOUNT</span>
-        <div class="flex-grow border-t border-gray-300"></div>
-    </div>
-
     <!-- Tabbed Login / Sign Up -->
     <div class="max-w-lg mx-auto bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
         <!-- Tabs -->
@@ -109,6 +24,14 @@
                 </div>
                 <form method="post" action="{% url 'login' %}" class="space-y-5">
                     {% csrf_token %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Login As</label>
+                        <select name="login_as" required class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 p-2.5 sm:text-sm border transition-colors outline-none bg-white">
+                            <option value="USER">User</option>
+                            <option value="VENDOR">Vendor</option>
+                            <option value="ADMIN">Admin</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                         <input type="text" name="username" required placeholder="Enter your username" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 p-2.5 sm:text-sm border transition-colors outline-none">

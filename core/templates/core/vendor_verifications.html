@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900">Identity Verifications</h2>
+            <p class="mt-2 text-sm text-gray-500">Review and approve user documents to allow them to book bikes.</p>
+        </div>
+        <div>
+            <a href="{% url 'vendor_dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Pending Verifications -->
+    <div class="mb-12">
+        <h3 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Pending Review</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for v in pending %}
+            <div class="bg-white rounded-lg shadow-sm border border-yellow-200 overflow-hidden">
+                <div class="bg-yellow-50 px-4 py-3 border-b border-yellow-100 flex justify-between items-center">
+                    <span class="font-medium text-yellow-800">{{ v.user.username }}</span>
+                    <span class="text-xs text-yellow-600">{{ v.created_at|timesince }} ago</span>
+                </div>
+                <div class="p-4">
+                    <p class="text-sm text-gray-500 mb-4">Document Type: <span class="font-semibold text-gray-900">{{ v.get_document_type_display }}</span></p>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1 text-center">Document</p>
+                            <a href="{{ v.document_image.url }}" target="_blank" class="block bg-gray-100 rounded border border-gray-200 aspect-[3/2] overflow-hidden hover:opacity-75 transition-opacity">
+                                <img src="{{ v.document_image.url }}" alt="Document" class="w-full h-full object-cover">
+                            </a>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1 text-center">Selfie</p>
+                            <a href="{{ v.selfie_image.url }}" target="_blank" class="block bg-gray-100 rounded border border-gray-200 aspect-[3/4] overflow-hidden hover:opacity-75 transition-opacity">
+                                <img src="{{ v.selfie_image.url }}" alt="Selfie" class="w-full h-full object-cover">
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <form action="{% url 'vendor_approve_verification' v.id 'approve' %}" method="POST" class="flex-1">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Approve
+                            </button>
+                        </form>
+                        <form action="{% url 'vendor_approve_verification' v.id 'reject' %}" method="POST" class="flex-1">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Reject
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-1 md:col-span-2 lg:col-span-3 bg-gray-50 rounded-lg border border-gray-200 border-dashed p-8 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">All caught up!</h3>
+                <p class="mt-1 text-sm text-gray-500">There are no pending identity verifications at the moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recently Reviewed Verifications -->
+    <div>
+        <h3 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Recently Reviewed By You</h3>
+        
+        <div class="bg-white shadow overflow-hidden sm:rounded-md border border-gray-200">
+            <ul class="divide-y divide-gray-200">
+                {% for v in reviewed %}
+                <li>
+                    <div class="px-4 py-4 sm:px-6 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if v.status == 'APPROVED' %}
+                                <span class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                                    <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </span>
+                                {% else %}
+                                <span class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
+                                    <svg class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ v.user.username }}</div>
+                                <div class="text-sm text-gray-500">{{ v.get_document_type_display }} • Reviewed {{ v.updated_at|date:"M d, Y" }}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if v.status == 'APPROVED' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ v.status }}
+                            </span>
+                        </div>
+                    </div>
+                </li>
+                {% empty %}
+                <li>
+                    <div class="px-4 py-8 sm:px-6 text-center text-sm text-gray-500">
+                        You haven't reviewed any verifications yet.
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

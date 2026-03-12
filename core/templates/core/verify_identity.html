@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="mb-6 flex items-center">
+        <a href="{% url 'user_dashboard' %}" class="text-brand-600 hover:text-brand-800 text-sm font-medium flex items-center">
+            <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Dashboard
+        </a>
+    </div>
+
+    <div class="bg-white shadow sm:rounded-lg border border-gray-100 overflow-hidden">
+        <div class="px-4 py-5 sm:p-6 border-b border-gray-200 bg-gray-50">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Verify Your Identity</h3>
+            <p class="mt-1 text-sm text-gray-500">
+                To ensure a safe community, you must verify your identity before renting bikes. This is a one-time process.
+            </p>
+        </div>
+
+        <div class="px-4 py-5 sm:p-6">
+            {% if verification and not verification.status == 'REJECTED' %}
+                <div class="text-center py-6">
+                    {% if verification.status == 'APPROVED' %}
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900">Identity Verified</h3>
+                        <p class="text-sm text-gray-500 mt-2">Your identity has been successfully verified. You can now book bikes.</p>
+                    {% elif verification.status == 'PENDING' %}
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                            <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900">Verification Pending</h3>
+                        <p class="text-sm text-gray-500 mt-2">Your documents are currently under review. Please wait for a vendor to approve them.</p>
+                    {% endif %}
+                </div>
+            {% else %}
+                {% if verification.status == 'REJECTED' %}
+                <div class="mb-6 p-4 rounded-md bg-red-50 border border-red-200">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Verification Rejected</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <p>Unfortunately, your previous verification was rejected. Please ensure your photos are clear, readable, and match the selected document type, then try again.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <form action="" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="space-y-6">
+                        {% for field in form %}
+                        <div>
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
+                            {% if field.name == 'document_image' %}
+                            <p class="text-xs text-gray-500 mb-2 mt-1">Upload a clear photo of your selected document.</p>
+                            {% elif field.name == 'selfie_image' %}
+                            <p class="text-xs text-gray-500 mb-2 mt-1">Upload a clear selfie showing your face to match the document.</p>
+                            {% endif %}
+                            
+                            <div class="mt-1">
+                                {{ field }}
+                            </div>
+                            {% if field.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ field.errors.as_text }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-8 flex justify-end">
+                        <button type="submit" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">
+                            Submit for Verification
+                        </button>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

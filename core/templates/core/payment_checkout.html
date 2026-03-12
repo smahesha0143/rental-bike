@@ -45,32 +45,35 @@
 
                 <!-- Payment Form -->
                 <div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Payment Details</h3>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Make Payment</h3>
                     <form method="post" class="space-y-5">
                         {% csrf_token %}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Cardholder Name</label>
-                            <input type="text" required placeholder="John Doe" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 p-2.5 sm:text-sm border transition-colors outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
-                            <input type="text" required placeholder="0000 0000 0000 0000" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 p-2.5 sm:text-sm border transition-colors outline-none">
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-                                <input type="text" required placeholder="MM/YY" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 p-2.5 sm:text-sm border transition-colors outline-none">
+                        
+                        <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-6 text-center">
+                            <h4 class="text-md font-medium text-gray-800 mb-4">Scan QR to Pay via UPI</h4>
+                            
+                            {% if company.upi_qr_image %}
+                            <div class="inline-block bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-4">
+                                <img src="{{ company.upi_qr_image.url }}" alt="UPI QR Code" class="h-48 w-48 object-contain">
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">CVV</label>
-                                <input type="text" required placeholder="123" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 p-2.5 sm:text-sm border transition-colors outline-none">
+                            <p class="text-sm text-gray-600 mb-2">Scan with GPay, PhonePe, Paytm, etc.</p>
+                            <p class="text-xs text-gray-500">Amount: ₹{{ booking.total_price }}</p>
+                            {% else %}
+                            <div class="py-10 bg-gray-100 rounded-lg flex flex-col justify-center items-center text-gray-500">
+                                <svg class="h-12 w-12 mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <p class="text-sm">Vendor has not uploaded a UPI QR Code yet.</p>
+                                <p class="text-xs mt-1">Please pay in person or contact the vendor.</p>
                             </div>
+                            {% endif %}
                         </div>
-                        <div class="pt-4">
-                            <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                                Pay ₹{{ booking.total_price }} Securely
+
+                        <div class="pt-2">
+                            <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors">
+                                I have made the payment
                             </button>
-                            <p class="text-xs text-center text-gray-500 mt-3 pt-2">🔒 Your payment information is secure.</p>
+                            <p class="text-xs text-center text-gray-500 mt-3 pt-2">By clicking this, you confirm you have transferred ₹{{ booking.total_price }}.</p>
                         </div>
                     </form>
                 </div>
